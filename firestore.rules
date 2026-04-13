@@ -1,0 +1,176 @@
+// ===============================================================
+// Assumed Data Model
+// ===============================================================
+//
+// Collection: users
+// Document ID: {userId}
+// Fields:
+//   - uid: string (required) - Firebase Auth UID
+//   - displayName: string (optional)
+//   - email: string (required, email format)
+//   - photoURL: string (optional, uri format)
+//   - targetAverage: number (optional) - Overall target average
+//   - onboardingComplete: boolean (optional)
+//   - top6Projection: number (optional)
+//   - universityGoals: array of strings (optional)
+//   - defaultAssessmentType: string (optional, enum: Test, Assignment, Quiz, Exam, Other)
+//   - defaultAssessmentWeight: number (optional)
+//
+// Collection: courses
+// Document ID: {courseId}
+// Fields:
+//   - uid: string (required) - Owner UID
+//   - name: string (required)
+//   - code: string (optional)
+//   - creditWeight: number (optional) - e.g. 1.0
+//   - targetMark: number (optional)
+//   - currentAverage: number (optional)
+//   - color: string (optional)
+//   - createdAt: timestamp (optional)
+//
+// Collection: assessments
+// Document ID: {assessmentId}
+// Fields:
+//   - uid: string (required) - Owner UID
+//   - courseId: string (required)
+//   - title: string (required)
+//   - type: string (required, enum: Test, Assignment, Quiz, Exam, Other)
+//   - score: number (required)
+//   - total: number (required)
+//   - weight: number (required) - Percentage weight
+//   - date: timestamp (optional)
+//
+// Collection: friendships
+// Document ID: {friendshipId}
+// Fields:
+//   - user1: string (required) - UID
+//   - user2: string (required) - UID
+//   - status: string (required, enum: pending, accepted)
+//   - createdAt: timestamp (optional)
+//
+// ===============================================================
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function isDocOwner() {
+      return isAuthenticated() && request.auth.uid == resource.data.uid;
+    }
+    
+    function uidUnchanged() {
+      return !('uid' in request.resource.data) || request.resource.data.uid == request.auth.uid;
+    }
+    
+    function uidNotModified() {
+      return !('uid' in request.resource.data) || request.resource.data.uid == resource.data.uid;
+    }
+
+    function isValidEmail(email) {
+      return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+          (request.auth.token.email == "camrenkaveh5@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+
+    function isValidUser(data) {
+      return data.uid is string && 
+             isValidEmail(data.email) &&
+             (!('targetAverage' in data) || data.targetAverage is number) &&
+             (!('onboardingComplete' in data) || data.onboardingComplete is bool) &&
+             (!('defaultAssessmentType' in data) || data.defaultAssessmentType in ['Test', 'Assignment', 'Quiz', 'Exam', 'Other']) &&
+             (!('defaultAssessmentWeight' in data) || data.defaultAssessmentWeight is number);
+    }
+
+    function isValidCourse(data) {
+      return data.uid is string &&
+             data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
+             (!('targetMark' in data) || (data.targetMark is number && data.targetMark >= 0 && data.targetMark <= 100));
+    }
+
+    function isValidAssessment(data) {
+      return data.uid is string &&
+             data.courseId is string &&
+             data.title is string && data.title.size() > 0 && data.title.size() < 100 &&
+             data.score is number && data.total is number && data.total > 0 &&
+             data.weight is number && data.weight >= 0 && data.weight <= 100;
+    }
+
+    function isValidReaction(data) {
+      return data.eventId is string && data.uid is string && data.type in ['kudos', 'keep_it_up'];
+    }
+
+    function isValidFeedEvent(data) {
+      return data.uid is string && data.type in ['grade_improvement', 'course_added', 'goal_reached'] && data.content is string;
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /users/{userId} {
+      allow read: if isAuthenticated(); 
+      allow create: if isOwner(userId) && isValidUser(request.resource.data);
+      allow update: if isOwner(userId) && isValidUser(request.resource.data) && uidNotModified();
+      allow delete: if isAdmin();
+    }
+
+    match /courses/{courseId} {
+      allow read: if isAuthenticated() && (request.auth.uid == resource.data.uid || isAdmin());
+      allow create: if isAuthenticated() && isValidCourse(request.resource.data) && uidUnchanged();
+      allow update: if isDocOwner() && isValidCourse(request.resource.data) && uidNotModified();
+      allow delete: if isDocOwner() || isAdmin();
+    }
+
+    match /assessments/{assessmentId} {
+      allow read: if isAuthenticated() && (request.auth.uid == resource.data.uid || isAdmin());
+      allow create: if isAuthenticated() && isValidAssessment(request.resource.data) && uidUnchanged();
+      allow update: if isDocOwner() && isValidAssessment(request.resource.data) && uidNotModified();
+      allow delete: if isDocOwner() || isAdmin();
+    }
+
+    match /friendships/{friendshipId} {
+      allow read: if isAuthenticated() && (request.auth.uid == resource.data.user1 || request.auth.uid == resource.data.user2);
+      allow create: if isAuthenticated() && (request.auth.uid == request.resource.data.user1 || request.auth.uid == request.resource.data.user2);
+      allow update: if isAuthenticated() && (request.auth.uid == resource.data.user1 || request.auth.uid == resource.data.user2);
+      allow delete: if isAuthenticated() && (request.auth.uid == resource.data.user1 || request.auth.uid == resource.data.user2);
+    }
+
+    match /feed/{eventId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidFeedEvent(request.resource.data) && uidUnchanged();
+      allow update: if false;
+      allow delete: if isDocOwner() || isAdmin();
+    }
+
+    match /reactions/{reactionId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidReaction(request.resource.data) && uidUnchanged();
+      allow update: if false;
+      allow delete: if isDocOwner() || isAdmin();
+    }
+  }
+}

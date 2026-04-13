@@ -1,0 +1,53 @@
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-headline: "Inter", ui-sans-serif, system-ui, sans-serif;
+  
+  --color-primary: #392cc1;
+  --color-primary-container: #534ad9;
+  --color-surface: #f7f9fb;
+  --color-surface-container-low: #f2f4f6;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-high: #ebeef1;
+  --color-surface-container-highest: #e1e4e8;
+  --color-on-surface: #191c1e;
+  --color-on-surface-variant: #44474e;
+  --color-outline-variant: #c7c4d8;
+  
+  --radius-DEFAULT: 4px;
+}
+
+@layer base {
+  body {
+    @apply bg-surface text-on-surface font-sans antialiased;
+    perspective: 1200px;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-headline tracking-tight;
+  }
+}
+
+@layer components {
+  .glass-panel {
+    @apply bg-surface-container-lowest/80 backdrop-blur-[20px] border border-outline-variant/15;
+  }
+  
+  .btn-primary {
+    @apply bg-gradient-to-b from-primary to-primary-container text-white px-6 py-2 rounded-[4px] font-medium transition-all hover:brightness-110 active:scale-95;
+  }
+  
+  .btn-secondary {
+    @apply bg-surface-container-high border border-outline-variant/15 px-6 py-2 rounded-[4px] font-medium transition-all hover:bg-surface-container-highest;
+  }
+  
+  .input-field {
+    @apply bg-surface-container-lowest border-b-2 border-transparent px-4 py-2 focus:border-primary focus:outline-none transition-all;
+  }
+}
+
+.markdown-body {
+  @apply prose prose-slate max-w-none;
+}

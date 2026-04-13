@@ -1,0 +1,119 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile and academic goals",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Firebase Auth UID" },
+        "displayName": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "photoURL": { "type": "string", "format": "uri" },
+        "targetAverage": { "type": "number", "description": "Overall target average (e.g. 90)" },
+        "onboardingComplete": { "type": "boolean" },
+        "top6Projection": { "type": "number" },
+        "universityGoals": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "List of target university programs"
+        }
+      },
+      "required": ["uid", "email"]
+    },
+    "Course": {
+      "title": "Course",
+      "description": "An academic course",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Owner UID" },
+        "name": { "type": "string" },
+        "code": { "type": "string" },
+        "creditWeight": { "type": "number", "description": "e.g. 1.0 or 0.5" },
+        "targetMark": { "type": "number" },
+        "currentAverage": { "type": "number" },
+        "color": { "type": "string", "description": "Hex color for UI" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "name"]
+    },
+    "Assessment": {
+      "title": "Assessment",
+      "description": "A single grade entry",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Owner UID" },
+        "courseId": { "type": "string" },
+        "title": { "type": "string" },
+        "type": { "type": "string", "enum": ["Test", "Assignment", "Quiz", "Exam", "Other"] },
+        "score": { "type": "number" },
+        "total": { "type": "number" },
+        "weight": { "type": "number", "description": "Percentage weight of the course grade" },
+        "date": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "courseId", "title", "score", "total", "weight"]
+    },
+    "Friendship": {
+      "title": "Friendship",
+      "description": "Social connection between users",
+      "type": "object",
+      "properties": {
+        "user1": { "type": "string", "description": "UID of first user" },
+        "user2": { "type": "string", "description": "UID of second user" },
+        "status": { "type": "string", "enum": ["pending", "accepted"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["user1", "user2", "status"]
+    },
+    "FeedEvent": {
+      "title": "FeedEvent",
+      "description": "A social update about a user's progress",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "userName": { "type": "string" },
+        "type": { "type": "string", "enum": ["grade_improvement", "course_added", "goal_reached"] },
+        "content": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "type", "content"]
+    },
+    "Reaction": {
+      "title": "Reaction",
+      "description": "A positive reaction to a feed event",
+      "type": "object",
+      "properties": {
+        "eventId": { "type": "string" },
+        "uid": { "type": "string" },
+        "type": { "type": "string", "enum": ["kudos", "keep_it_up"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["eventId", "uid", "type"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Private user profile data"
+    },
+    "/courses/{courseId}": {
+      "schema": "Course",
+      "description": "User's academic courses"
+    },
+    "/assessments/{assessmentId}": {
+      "schema": "Assessment",
+      "description": "Individual grade entries"
+    },
+    "/friendships/{friendshipId}": {
+      "schema": "Friendship",
+      "description": "Social connections"
+    },
+    "/feed/{eventId}": {
+      "schema": "FeedEvent",
+      "description": "Social feed events"
+    },
+    "/reactions/{reactionId}": {
+      "schema": "Reaction",
+      "description": "Reactions to feed events"
+    }
+  }
+}
