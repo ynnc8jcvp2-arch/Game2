@@ -1,3 +1,9 @@
+export interface QuickAddTemplate {
+  label: string;
+  type: Assessment['type'];
+  weight: number;
+}
+
 export interface UserProfile {
   uid: string;
   displayName: string | null;
@@ -9,6 +15,7 @@ export interface UserProfile {
   universityGoals?: string[];
   defaultAssessmentType?: Assessment['type'];
   defaultAssessmentWeight?: number;
+  quickAddTemplates?: QuickAddTemplate[];
 }
 
 export interface Course {

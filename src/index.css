@@ -1,28 +1,32 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-headline: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-headline: "Outfit", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
   
-  --color-primary: #392cc1;
-  --color-primary-container: #534ad9;
-  --color-surface: #f7f9fb;
-  --color-surface-container-low: #f2f4f6;
-  --color-surface-container-lowest: #ffffff;
-  --color-surface-container-high: #ebeef1;
-  --color-surface-container-highest: #e1e4e8;
-  --color-on-surface: #191c1e;
-  --color-on-surface-variant: #44474e;
-  --color-outline-variant: #c7c4d8;
+  --color-primary: #D4FF00; /* Neon Yellow/Green */
+  --color-primary-container: #2A3300;
+  --color-surface: #0B0A10; /* Deep Purple/Black */
+  --color-surface-container-low: #14121C;
+  --color-surface-container-lowest: #050408;
+  --color-surface-container-high: #1E1B29;
+  --color-surface-container-highest: #2A2638;
+  --color-on-surface: #ffffff;
+  --color-on-surface-variant: #A19DB5;
+  --color-outline-variant: #2A2638;
+  --color-accent: #8B5CF6; /* Soft Purple */
   
-  --radius-DEFAULT: 4px;
+  --radius-DEFAULT: 24px;
 }
 
 @layer base {
   body {
     @apply bg-surface text-on-surface font-sans antialiased;
     perspective: 1200px;
+    letter-spacing: -0.01em;
   }
   
   h1, h2, h3, h4, h5, h6 {
@@ -30,24 +34,66 @@
   }
 }
 
+@theme {
+  --animate-marquee: marquee 30s linear infinite;
+
+  @keyframes marquee {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+}
+
 @layer components {
   .glass-panel {
-    @apply bg-surface-container-lowest/80 backdrop-blur-[20px] border border-outline-variant/15;
+    @apply bg-surface-container-low/60 backdrop-blur-[40px] border border-white/5 relative rounded-[32px];
+  }
+
+  .glass-panel::before {
+    content: '';
+    @apply absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none rounded-[32px];
   }
   
   .btn-primary {
-    @apply bg-gradient-to-b from-primary to-primary-container text-white px-6 py-2 rounded-[4px] font-medium transition-all hover:brightness-110 active:scale-95;
+    @apply bg-primary text-black px-8 py-3 rounded-full font-bold transition-all hover:brightness-110 active:scale-95 shadow-[0_0_30px_rgba(212,255,0,0.2)] border border-primary/50;
   }
   
   .btn-secondary {
-    @apply bg-surface-container-high border border-outline-variant/15 px-6 py-2 rounded-[4px] font-medium transition-all hover:bg-surface-container-highest;
+    @apply bg-transparent border border-outline-variant px-8 py-3 rounded-full font-bold transition-all hover:bg-white/5 hover:border-white/20 text-white;
   }
   
   .input-field {
-    @apply bg-surface-container-lowest border-b-2 border-transparent px-4 py-2 focus:border-primary focus:outline-none transition-all;
+    @apply bg-surface-container-low border border-outline-variant px-4 py-3 focus:border-primary focus:outline-none transition-all text-sm rounded-2xl;
+  }
+
+  .fintech-card {
+    @apply border border-outline-variant bg-surface-container-low p-6 rounded-[32px] transition-all hover:border-primary/30 relative overflow-hidden;
+  }
+
+  .stat-value {
+    @apply font-headline text-4xl font-black tracking-tighter;
+  }
+
+  .terminal-text {
+    @apply font-sans text-xs font-bold uppercase tracking-widest text-on-surface-variant;
+  }
+
+  .hero-title {
+    @apply text-6xl lg:text-[100px] font-medium tracking-tighter leading-[1.1];
+  }
+
+  .section-label {
+    @apply text-sm font-bold text-primary tracking-widest uppercase mb-6;
+  }
+
+  .text-gradient {
+    @apply text-transparent bg-clip-text bg-gradient-to-r from-white to-white/60;
+  }
+  
+  .text-gradient-primary {
+    @apply text-transparent bg-clip-text bg-gradient-to-r from-primary to-emerald-400;
   }
 }
 
 .markdown-body {
-  @apply prose prose-slate max-w-none;
+  @apply prose prose-invert max-w-none;
 }

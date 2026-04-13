@@ -1,66 +1,64 @@
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, Type } from "@google/genai";
 
-let genAI: GoogleGenAI | null = null;
+let ai: GoogleGenAI | null = null;
 
-function getGenAI() {
-  if (!genAI) {
-    // @ts-ignore
+function getAI() {
+  if (!ai) {
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
       throw new Error("GEMINI_API_KEY is not set in the environment.");
     }
-    // @ts-ignore
-    genAI = new GoogleGenAI(apiKey);
+    ai = new GoogleGenAI({ apiKey });
   }
-  return genAI;
+  return ai;
 }
 
 export async function parseGradesFromImage(base64Image: string, mimeType: string = "image/png") {
-  const ai = getGenAI();
-  // @ts-ignore
-  const model = ai.getGenerativeModel({ model: "gemini-2.0-flash" });
-
-  const prompt = `
-    You are an expert academic data parser. Extract all individual assessment/grade entries from this screenshot.
-    
-    Rules:
-    1. Look for titles (e.g., "Unit 1 Test", "Lab 2"), scores (e.g., 45/50), and weights (e.g., 15%).
-    2. If a weight is missing, estimate it based on the task type (Test: 15%, Quiz: 5%, Assignment: 10%, Exam: 30%) or return 10 as a default.
-    3. Categorize the type as one of: "Test", "Assignment", "Quiz", "Exam", "Other".
-    4. Return ONLY a valid JSON array of objects.
-    
-    Structure:
-    {
-      "title": string,
-      "score": number,
-      "total": number,
-      "weight": number,
-      "type": "Test" | "Assignment" | "Quiz" | "Exam" | "Other"
-    }
-    
-    If no grades are found, return [].
-  `;
-
+  const genAI = getAI();
+  
   try {
-    const result = await model.generateContent([
-      prompt,
-      {
-        inlineData: {
-          data: base64Image.split(',')[1],
-          mimeType
+    const response = await genAI.models.generateContent({
+      model: "gemini-2.0-flash",
+      contents: [
+        {
+          parts: [
+            { text: "Extract all individual assessment/grade entries from this screenshot. Look for titles, scores, totals, and weights. Categorize the type as Test, Assignment, Quiz, Exam, or Other." },
+            {
+              inlineData: {
+                data: base64Image.split(',')[1],
+                mimeType
+              }
+            }
+          ]
+        }
+      ],
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.ARRAY,
+          items: {
+            type: Type.OBJECT,
+            properties: {
+              title: { type: Type.STRING },
+              score: { type: Type.NUMBER },
+              total: { type: Type.NUMBER },
+              weight: { type: Type.NUMBER },
+              type: { 
+                type: Type.STRING,
+                enum: ["Test", "Assignment", "Quiz", "Exam", "Other"]
+              }
+            },
+            required: ["title", "score", "total"]
+          }
         }
       }
-    ]);
+    });
 
-    const response = await result.response;
-    const text = response.text();
+    const text = response.text;
+    if (!text) return [];
     
-    // Clean up potential markdown formatting
-    const jsonStr = text.replace(/```json|```/g, '').trim();
-    const parsed = JSON.parse(jsonStr);
-    
-    if (!Array.isArray(parsed)) return [];
-    return parsed;
+    const parsed = JSON.parse(text);
+    return Array.isArray(parsed) ? parsed : [];
   } catch (e) {
     console.error("Gemini Parsing Error:", e);
     return [];
