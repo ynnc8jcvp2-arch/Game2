@@ -14,6 +14,7 @@ interface CoursesProps {
 export default function Courses({ user, courses }: CoursesProps) {
   const [isAdding, setIsAdding] = useState(false);
   const [newCourseName, setNewCourseName] = useState('');
+  const [newCourseCode, setNewCourseCode] = useState('');
   const [newCourseTarget, setNewCourseTarget] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   
@@ -29,10 +30,12 @@ export default function Courses({ user, courses }: CoursesProps) {
       await addDoc(collection(db, 'courses'), {
         uid: user.uid,
         name: newCourseName,
+        code: newCourseCode || null,
         targetMark: newCourseTarget ? Number(newCourseTarget) : null,
         createdAt: serverTimestamp()
       });
       setNewCourseName('');
+      setNewCourseCode('');
       setNewCourseTarget('');
       setIsAdding(false);
     } catch (error) {
@@ -103,8 +106,18 @@ export default function Courses({ user, courses }: CoursesProps) {
                 required
               />
             </div>
-            <div className="flex-1 w-full">
-              <label className="block text-sm font-bold text-on-surface-variant mb-2">Target Mark (%)</label>
+            <div className="flex-1 w-full max-w-[150px]">
+              <label className="block text-sm font-bold text-on-surface-variant mb-2">Code (Opt)</label>
+              <input 
+                type="text"
+                value={newCourseCode}
+                onChange={(e) => setNewCourseCode(e.target.value)}
+                className="w-full input-field"
+                placeholder="e.g. MHF4U"
+              />
+            </div>
+            <div className="flex-1 w-full max-w-[150px]">
+              <label className="block text-sm font-bold text-on-surface-variant mb-2">Target (%)</label>
               <input 
                 type="number"
                 value={newCourseTarget}
@@ -142,7 +155,10 @@ export default function Courses({ user, courses }: CoursesProps) {
                 {course.name.charAt(0)}
               </div>
               <div>
-                <h3 className="text-xl font-bold">{course.name}</h3>
+                <h3 className="text-xl font-bold">
+                  {course.code ? <span className="text-primary mr-2">{course.code}</span> : null}
+                  {course.name}
+                </h3>
                 <p className="text-sm text-on-surface-variant">
                   Added {course.createdAt?.toDate ? course.createdAt.toDate().toLocaleDateString() : 'recently'}
                 </p>

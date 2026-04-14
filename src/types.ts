@@ -16,6 +16,7 @@ export interface UserProfile {
   defaultAssessmentType?: Assessment['type'];
   defaultAssessmentWeight?: number;
   quickAddTemplates?: QuickAddTemplate[];
+  isPremium?: boolean;
 }
 
 export interface Course {
@@ -40,6 +41,7 @@ export interface Assessment {
   total: number;
   weight: number;
   date?: any;
+  kcat?: { k: number, c: number, a: number, t: number } | null;
 }
 
 export interface Friendship {

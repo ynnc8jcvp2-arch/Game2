@@ -29,6 +29,7 @@ import Social from './Social';
 import Insights from './Insights';
 import Simulator from './Simulator';
 import Courses from './Courses';
+import AdBanner from './AdBanner';
 import { 
   LineChart, 
   Line, 
@@ -50,9 +51,11 @@ interface DashboardProps {
   profile: UserProfile | null;
   courses: Course[];
   assessments: Assessment[];
+  onOpenPremium?: () => void;
+  isPremium?: boolean;
 }
 
-export default function Dashboard({ user, profile, courses, assessments }: DashboardProps) {
+export default function Dashboard({ user, profile, courses, assessments, onOpenPremium, isPremium }: DashboardProps) {
   const [activeTab, setActiveTab] = useState<'overview' | 'courses' | 'grades' | 'university' | 'social' | 'insights' | 'simulator'>('overview');
   const [curriculum, setCurriculum] = useState<'Standard' | 'AP' | 'IB' | 'A-Level'>('Standard');
   const [showOnboarding, setShowOnboarding] = useState(profile?.onboardingComplete === false);
@@ -206,6 +209,8 @@ export default function Dashboard({ user, profile, courses, assessments }: Dashb
                 <StatCard title="Study Streak" value="12" trend="days current streak" isPositive={true} colorHint="bg-orange-500" />
               </div>
 
+              {!isPremium && <AdBanner type="horizontal" />}
+
               {/* Main Analytics Section */}
               <div className="grid lg:grid-cols-2 gap-8">
                 <div className="bg-surface-container-low border border-white/5 p-8 rounded-[32px]">
@@ -310,14 +315,17 @@ function NavButton({ active, onClick, icon, label }: { active: boolean, onClick:
 
 function StatCard({ title, value, trend, isPositive, colorHint }: { title: string, value: string, trend: string, isPositive: boolean | null, colorHint?: string }) {
   return (
-    <div className={`bg-surface-container-low border border-white/5 p-8 rounded-[32px] group hover:border-white/20 transition-all relative overflow-hidden`}>
+    <div className={`bg-surface-container-low border border-white/5 p-8 rounded-[32px] group hover:border-white/20 transition-all relative overflow-hidden flex flex-col justify-between h-full min-h-[180px]`}>
       {colorHint && <div className={`absolute top-0 left-0 w-full h-1 ${colorHint}`} />}
       <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
-      <p className="text-sm text-on-surface-variant mb-2 relative z-10">{title}</p>
-      <p className="text-4xl font-black tracking-tighter mb-2 text-white relative z-10">{value}</p>
-      <p className={`text-sm font-medium relative z-10 ${isPositive === true ? 'text-primary' : isPositive === false ? 'text-red-500' : 'text-on-surface-variant'}`}>
-        {trend}
-      </p>
+      
+      <div className="relative z-10">
+        <p className="text-sm text-on-surface-variant mb-2">{title}</p>
+        <p className="text-4xl font-black tracking-tighter mb-2 text-white">{value}</p>
+        <p className={`text-sm font-medium ${isPositive === true ? 'text-[#00FF66]' : isPositive === false ? 'text-red-500' : 'text-on-surface-variant'}`}>
+          {trend}
+        </p>
+      </div>
     </div>
   );
 }

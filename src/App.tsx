@@ -5,6 +5,7 @@ import { collection, query, where, onSnapshot, doc, getDoc, setDoc } from 'fireb
 import { UserProfile, Course, Assessment, OperationType } from './types';
 import LandingPage from './components/LandingPage';
 import Dashboard from './components/Dashboard';
+import PremiumModal from './components/PremiumModal';
 import { motion, AnimatePresence } from 'motion/react';
 import ErrorBoundary from './components/ErrorBoundary';
 
@@ -14,6 +15,7 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [courses, setCourses] = useState<Course[]>([]);
   const [assessments, setAssessments] = useState<Assessment[]>([]);
+  const [isPremiumModalOpen, setIsPremiumModalOpen] = useState(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (u) => {
@@ -32,6 +34,7 @@ export default function App() {
               email: u.email,
               photoURL: u.photoURL,
               onboardingComplete: false,
+              isPremium: false,
             };
             await setDoc(profileRef, newProfile);
             setProfile(newProfile);
@@ -50,6 +53,13 @@ export default function App() {
   useEffect(() => {
     if (!user) return;
 
+    const profileRef = doc(db, 'users', user.uid);
+    const unsubscribeProfile = onSnapshot(profileRef, (docSnap) => {
+      if (docSnap.exists()) {
+        setProfile(docSnap.data() as UserProfile);
+      }
+    });
+
     const coursesQuery = query(collection(db, 'courses'), where('uid', '==', user.uid));
     const unsubscribeCourses = onSnapshot(coursesQuery, (snapshot) => {
       setCourses(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Course)));
@@ -65,6 +75,7 @@ export default function App() {
     });
 
     return () => {
+      unsubscribeProfile();
       unsubscribeCourses();
       unsubscribeAssessments();
     };
@@ -101,7 +112,18 @@ export default function App() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
-            <Dashboard user={user} profile={profile} courses={courses} assessments={assessments} />
+            <Dashboard 
+              user={user} 
+              profile={profile} 
+              courses={courses} 
+              assessments={assessments} 
+              onOpenPremium={() => setIsPremiumModalOpen(true)}
+            />
+            <PremiumModal 
+              isOpen={isPremiumModalOpen} 
+              onClose={() => setIsPremiumModalOpen(false)} 
+              profile={profile} 
+            />
           </motion.div>
         )}
       </AnimatePresence>
